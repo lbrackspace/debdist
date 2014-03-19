@@ -1,0 +1,6 @@
+*.pyc
+*.cfg
+.venv/
+.idea/
+server.crt
+server.key

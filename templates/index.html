@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Package Promotion</title>
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul>
+    {% for message in messages %}
+        <li>{{ message }} </li>
+    {% endfor %}
+    </ul>
+    <hr>
+    {% endif %}
+    {% endwith %}
+
+    {% if status == 200 %}
+        {% if selected %}
+        <h3>Selected packages for promotion:</h3>
+        <ul>
+        {% for package in selected %}
+            <li>{{ package.name }}</li>
+        {% endfor %}
+        </ul>
+        {% else %}
+            <h3>Did not select any packages for promotion.</h3>
+        {% endif %}
+    {% elif status != None %}
+        <h3>Communication with server failed: {{ status }}</h3>
+    {% endif %}
+
+{% if debs %}
+    <form method="POST" action="/">
+        {{ form.hidden_tag() }}
+        <table border="1">
+            <tr>
+                <td></td>
+                <td>Package</td>
+                <td>Description</td>
+            </tr>
+            {% for deb in form if deb.id != 'csrf_token' %}
+            <tr>
+                <td>{{ deb }}</td>
+                <td nowrap>{{ deb.label }}</td>
+                <td>{{ deb.description }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <input type="submit" value="Promote Packages">
+    </form>
+{% endif %}
+</body>
+</html>
