@@ -30,20 +30,20 @@
         <h3>Communication with server failed: {{ status }}</h3>
     {% endif %}
 
-{% if debs %}
+{% if versions %}
     <form method="POST" action="/">
         {{ form.hidden_tag() }}
         <table border="1">
             <tr>
                 <td></td>
-                <td>Package</td>
-                <td>Description</td>
+                <td>Version</td>
+                <td>Packages</td>
             </tr>
-            {% for deb in form if deb.id != 'csrf_token' %}
+            {% for version in form if version.id != 'csrf_token' %}
             <tr>
-                <td>{{ deb }}</td>
-                <td nowrap>{{ deb.label }}</td>
-                <td>{{ deb.description }}</td>
+                <td>{{ version }}</td>
+                <td nowrap>{{ version.label }}</td>
+                <td>{{ version.description }}</td>
             </tr>
             {% endfor %}
         </table>

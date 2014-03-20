@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with DebDist.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import ConfigParser
+import gzip
 import os
+import re
 
-import debian.debfile
 import flask
 import flask_wtf
 import hashlib
@@ -49,39 +51,71 @@ class DebDistClient():
         app.secret_key = self.auth_token
 
 
-    def fill_form(self, debs):
-        for deb in debs:
-            control = debs[deb]
-            name = ' - '.join((control['Package'], control['Version']))
-            setattr(DebForm, deb, wtforms.BooleanField(label=name,
-                                                       id=deb,
-                                                       description=control[
-                                                           'Description']))
+    def fill_form(self, versions):
+        for version in versions:
+            attribute_name = version.replace(".","_")
+            description=""
+            for package in versions[version]:
+                description += package['name'] + ", "
+            description=description[0:-2]
+            setattr(DebForm, attribute_name,
+                    wtforms.BooleanField(label=version,
+                                         description=description))
 
+    def parse_release(self):
+        release = os.path.join(self.deb_path, "Release")
+        try:
+            contents = file(release).read()
+        except:
+            contents = gzip.open(release).read()
 
-    def get_debs(self):
-        deb_files = [f for f in os.listdir(self.deb_path) if f.endswith(".deb")]
-        deb_controls = {}
-        for deb_name in deb_files:
-            deb = debian.debfile.DebFile(os.path.join(self.deb_path, deb_name))
-            deb_controls[deb_name] = deb.debcontrol()
-        return deb_controls
+        match = re.match(".* (.*Packages)\n", contents, flags=re.DOTALL).group(
+            1)
+        if match:
+            return self.parse_packages(os.path.join(self.deb_path, match))
+        raise Exception("No packages file found")
 
+    def parse_packages(self, filename):
+        if filename.endswith(".gz"):
+            contents = gzip.open(filename).read()
+        else:
+            contents = file(filename).read()
 
-    def send_debs(self, debs):
+        packages = re.findall(
+            ".*?Package:[ ]?(.*?)\n"
+            ".*?Version:[ ]?(.*?)\n"
+            ".*?Filename:[ ]?(.*?)\n",
+            contents, flags=re.DOTALL)
+
+        versions = {}
+        for p in packages:
+            info = {"name": p[0], "file": p[2]}
+            if p[1] not in versions:
+                versions[p[1]] = []
+            versions[p[1]].append(info)
+
+        valid_versions = {}
+        for v in versions:
+            if re.match("^1\.[0-9]+\.[0-9]+$", v) and len(versions[v]) > 1:
+                valid_versions[v] = versions[v]
+        return valid_versions
+
+    def send_debs(self, selected, versions):
         headers = {'content-type': 'application/json',
                    'x-auth-token': self.auth_token}
         data = {'debs': []}
-        for deb in debs:
-            url = '/'.join((self.deb_base_url, deb.id))
-            path = os.path.join(self.deb_path, deb.id)
-            md5sum = hashlib.md5()
-            f = open(path)
-            while True:
-                stuff = f.read(1024)
-                if not stuff: break
-                md5sum.update(stuff)
-            data['debs'].append({'url': url, 'md5': md5sum.hexdigest()})
+        for vid in selected:
+            version = versions[vid.name.replace("_",".")]
+            for file in version:
+                url = '/'.join((self.deb_base_url, file['file']))
+                path = os.path.join(self.deb_path, file['file'])
+                md5sum = hashlib.md5()
+                f = open(path)
+                while True:
+                    stuff = f.read(1024)
+                    if not stuff: break
+                    md5sum.update(stuff)
+                data['debs'].append({'url': url, 'md5': md5sum.hexdigest()})
         r = requests.post(self.server_url, headers=headers,
                           data=json.dumps(data), verify=False)
         return r.status_code
@@ -93,14 +127,14 @@ class DebDistClient():
 
 @app.route('/', methods=('GET', 'POST'))
 def landing():
-    debs = client.get_debs()
-    client.fill_form(debs)
+    versions = client.parse_release()
+    client.fill_form(versions)
     form = DebForm()
     selected, status = None, None
     if form.validate_on_submit():
         selected = [x for x in form if x.data == True]
-        status = client.send_debs(selected)
-    return flask.render_template("index.html", debs=debs, form=form,
+        status = client.send_debs(selected, versions)
+    return flask.render_template("index.html", versions=versions, form=form,
                                  selected=selected, status=status)
 
 
