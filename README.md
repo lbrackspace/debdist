@@ -11,7 +11,7 @@ dev.cfg = Config file (TODO: need to rename this)
 ```
 virtualenv .venv
 . .venv/bin/activate
-pip -r requires.txt
+pip install -r requires.txt
 ```
 
 Copy config.cfg.example to dev.cfg, and edit it to contain the appropriate paths and authentication data.
