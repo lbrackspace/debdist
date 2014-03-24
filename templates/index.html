@@ -2,6 +2,18 @@
 <html>
 <head>
     <title>Package Promotion</title>
+    <script src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
+    <script>
+        function show(thing) {
+            var el = $("#td_" + thing)[0];
+            var cb = $("#" + thing)[0];
+            if (cb.checked) {
+                el.style.display = "inline"
+            } else {
+                el.style.display = "none"
+            }
+        }
+    </script>
 </head>
 <body>
     {% with messages = get_flashed_messages() %}
@@ -30,20 +42,35 @@
         <h3>Communication with server failed: {{ status }}</h3>
     {% endif %}
 
-{% if versions %}
+{% if major_versions %}
+    <table >
+    <tr>
+        {% for v in major_versions|sort %}
+        <td style="border-style: dotted; border-width: 1px">
+            <a href="?v={{ v }}">{{ v }}</a>
+        </td>
+        {% endfor %}
+    </tr>
+    </table>
     <form method="POST" action="/">
         {{ form.hidden_tag() }}
-        <table border="1">
+        <table style="border-spacing: 0px">
             <tr>
                 <td></td>
-                <td>Version</td>
-                <td>Packages</td>
+                <td style="border-bottom: solid; border-width: 1px">Version</td>
+                <td></td>
             </tr>
-            {% for version in form if version.id != 'csrf_token' %}
+            {% for version in form|deb_sort(show_version=show_version) %}
             <tr>
-                <td>{{ version }}</td>
-                <td nowrap>{{ version.label }}</td>
-                <td>{{ version.description }}</td>
+                <td style="vertical-align: top" onclick="show('{{ version.name }}')">{{ version }}</td>
+                <td nowrap style="vertical-align: top; border-right: solid; border-width: 1px">{{ version.label }}</td>
+                <td style="border-style: solid; border-width: 2px; display: none" id="td_{{ version.name }}">
+                    <ol>
+                    {% for p in version.list|sort %}
+                        <li>{{ p }}</li>
+                    {% endfor %}
+                    </ol>
+                </td>
             </tr>
             {% endfor %}
         </table>

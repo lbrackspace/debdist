@@ -22,7 +22,9 @@ import re
 
 import flask
 import flask_wtf
+import functools
 import hashlib
+import jinja2
 import json
 import OpenSSL
 import requests
@@ -33,7 +35,35 @@ app = flask.Flask(__name__)
 
 
 class DebForm(flask_wtf.Form):
-    pass
+    def init_lists(self):
+        bools = [x for x in self if isinstance(x, DebBoolean)]
+        for b in bools:
+            versions = [x.strip() for x in b.description.split(",")]
+            b.set_list(versions)
+
+
+@functools.total_ordering
+class DebBoolean(wtforms.BooleanField):
+    list = []
+
+    def set_list(self, list):
+        self.list = list
+
+    def __lt__(self, other):
+        if "_" not in self.name or not isinstance(other, DebBoolean):
+            return self
+        my_names = self.name.split("_")
+        other_names = other.name.split("_")
+
+        my_value = 0
+        other_value = 0
+        for v in my_names:
+            my_value = my_value * 1000 + int(v)
+
+        for v in other_names:
+            other_value = other_value * 1000 + int(v)
+
+        return my_value < other_value
 
 
 class DebDistClient():
@@ -49,18 +79,18 @@ class DebDistClient():
         self.ssl_context.use_certificate_file('server.crt')
         app.config.from_object('config')
         app.secret_key = self.auth_token
+        app.jinja_env.filters['deb_sort'] = deb_sort
 
 
     def fill_form(self, versions):
         for version in versions:
-            attribute_name = version.replace(".","_")
-            description=""
+            attribute_name = version.replace(".", "_")
+            description = ""
             for package in versions[version]:
-                description += package['name'] + ", "
-            description=description[0:-2]
-            setattr(DebForm, attribute_name,
-                    wtforms.BooleanField(label=version,
-                                         description=description))
+                description += package['file'] + ", "
+            description = description[0:-2]
+            boolean = DebBoolean(label=version, description=description)
+            setattr(DebForm, attribute_name, boolean)
 
     def parse_release(self):
         release = os.path.join(self.deb_path, "Release")
@@ -105,7 +135,7 @@ class DebDistClient():
                    'x-auth-token': self.auth_token}
         data = {'debs': []}
         for vid in selected:
-            version = versions[vid.name.replace("_",".")]
+            version = versions[vid.name.replace("_", ".")]
             for file in version:
                 url = '/'.join((self.deb_base_url, file['file']))
                 path = os.path.join(self.deb_path, file['file'])
@@ -125,17 +155,35 @@ class DebDistClient():
         print("Exiting...")
 
 
+def deb_sort(iterable, show_version=None):
+    if iterable is None or isinstance(iterable, jinja2.Undefined):
+        return iterable
+    if show_version:
+        show_version = show_version.replace(".", "_")
+        new_list = [x for x in iterable if
+                    isinstance(x, DebBoolean) and x.name.startswith(
+                        show_version)]
+    else:
+        new_list = [x for x in iterable if isinstance(x, DebBoolean)]
+    new_list.sort()
+    return new_list
+
+
 @app.route('/', methods=('GET', 'POST'))
 def landing():
     versions = client.parse_release()
+    major_versions = set([x[0:4] for x in versions])
     client.fill_form(versions)
+    show = flask.request.values['v'] if 'v' in flask.request.values else None
     form = DebForm()
+    form.init_lists()
     selected, status = None, None
     if form.validate_on_submit():
         selected = [x for x in form if x.data == True]
         status = client.send_debs(selected, versions)
-    return flask.render_template("index.html", versions=versions, form=form,
-                                 selected=selected, status=status)
+    return flask.render_template("index.html", major_versions=major_versions,
+                                 form=form, selected=selected, status=status,
+                                 show_version=show)
 
 
 if __name__ == '__main__':
