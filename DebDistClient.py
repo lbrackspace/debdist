@@ -19,6 +19,7 @@ import ConfigParser
 import gzip
 import os
 import re
+import StringIO
 
 import flask
 import flask_wtf
@@ -51,7 +52,7 @@ class DebBoolean(wtforms.BooleanField):
 
     def __lt__(self, other):
         if "_" not in self.name or not isinstance(other, DebBoolean):
-            return self
+            return True
         my_names = self.name.split("_")
         other_names = other.name.split("_")
 
@@ -72,6 +73,7 @@ class DebDistClient():
         config.read("dev.cfg")
         self.deb_path = config.get('client', 'deb_path')
         self.deb_base_url = config.get('client', 'deb_base_url')
+        self.remote_deb_base_url = config.get('client', 'remote_deb_base_url')
         self.server_url = config.get('client', 'remote_url')
         self.auth_token = config.get('auth', 'token')
         self.ssl_context = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
@@ -88,31 +90,52 @@ class DebDistClient():
             description = ""
             for package in versions[version]:
                 filename = package['file']
-                filename = filename[filename.rfind("/")+1:]
+                filename = filename[filename.rfind("/") + 1:]
                 description += filename + ", "
             description = description[0:-2]
             boolean = DebBoolean(label=version, description=description)
             setattr(DebForm, attribute_name, boolean)
 
-    def parse_release(self):
-        release = os.path.join(self.deb_path, "Release")
+    def parse_releases(self):
+        release_local = os.path.join(self.deb_path, "Release")
+        release_remote = '/'.join((self.remote_deb_base_url, "Release"))
+
         try:
-            contents = file(release).read()
+            contents = file(release_local).read()
         except:
-            contents = gzip.open(release).read()
+            contents = gzip.open(release_local).read()
 
-        match = re.match(".* (.*Packages)\n", contents, flags=re.DOTALL).group(
-            1)
+        match = re.match(".* (.*Packages)\n", contents,
+                         flags=re.DOTALL).group(1)
         if match:
-            return self.parse_packages(os.path.join(self.deb_path, match))
-        raise Exception("No packages file found")
-
-    def parse_packages(self, filename):
-        if filename.endswith(".gz"):
-            contents = gzip.open(filename).read()
+            if match.endswith(".gz"):
+                packages = gzip.open(os.path.join(self.deb_path, match)).read()
+            else:
+                packages = file(os.path.join(self.deb_path, match)).read()
+            lp = self.parse_packages(packages)
         else:
-            contents = file(filename).read()
+            raise Exception("No local Packages file found")
 
+        try:
+            contents = requests.get(release_remote)
+            match = re.match(".* (.*main/binary-amd64/Packages)\n", contents.text,
+                             flags=re.DOTALL).group(1)
+            if match:
+                if match.endswith(".gz"):
+                    response = requests.get(url='/'.join((self.remote_deb_base_url, match)), stream=True)
+                    buffer = StringIO.StringIO( response.raw.read())
+                    gf = gzip.GzipFile(fileobj=buffer, mode='rb')
+                    packages = gf.read()
+                else:
+                    packages = requests.get('/'.join((self.remote_deb_base_url, match))).text
+                rp = self.parse_packages(packages)
+            else:
+                raise Exception("Failure parsing remote Release file")
+        except:
+            raise Exception("Failure parsing remote Packages file")
+        return lp, rp
+
+    def parse_packages(self, contents):
         packages = re.findall(
             ".*?Package:[ ]?(.*?)\n"
             ".*?Version:[ ]?(.*?)\n"
@@ -170,13 +193,51 @@ def deb_sort(iterable, show_version=None):
     new_list.sort(reverse=True)
     return new_list
 
+def remote_sort(remotes, version):
+    for r in remotes:
+        for f in remotes[r]:
+            f['version'] = r
+    if version:
+        remotes = [remotes[x] for x in remotes if x.startswith(version)]
+    else:
+        remotes = [remotes[x] for x in remotes]
+    remotes.sort(cmp_deb, reverse=True)
+    return remotes
+
+def cmp_deb(a, b):
+    if "." not in a[0]['version'] or "." not in b[0]['version']:
+        return 0
+    my_names = a[0]['version'].split(".")
+    other_names = b[0]['version'].split(".")
+
+    my_value = 0
+    other_value = 0
+    for v in my_names:
+        my_value = my_value * 1000 + int(v)
+
+    for v in other_names:
+        other_value = other_value * 1000 + int(v)
+
+    if my_value > other_value:
+        return 1
+    elif my_value == other_value:
+        return 0
+    else:
+        return -1
 
 @app.route('/', methods=('GET', 'POST'))
 def landing():
-    versions = client.parse_release()
+    versions, remotes = client.parse_releases()
     major_versions = set([x[0:4] for x in versions])
+    major_remotes = set([x[0:4] for x in remotes])
+    for r in remotes:
+        for f in remotes[r]:
+            f['file'] = f['file'][f['file'].rfind("/") + 1:]
     client.fill_form(versions)
-    show = flask.request.values['v'] if 'v' in flask.request.values else None
+    tokens = flask.request.values
+    show_local = tokens['l'] if 'l' in tokens else None
+    show_remote = tokens['r'] if 'r' in tokens else None
+    remotes = remote_sort(remotes, show_remote)
     form = DebForm()
     form.init_lists()
     selected, status = None, None
@@ -185,7 +246,9 @@ def landing():
         status = client.send_debs(selected, versions)
     return flask.render_template("base.html", major_versions=major_versions,
                                  form=form, selected=selected, status=status,
-                                 show_version=show)
+                                 show_version=show_local, remotes=remotes,
+                                 major_remotes=major_remotes,
+                                 show_remote=show_remote)
 
 
 if __name__ == '__main__':

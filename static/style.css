@@ -7,7 +7,13 @@ a.selected {
     color: #ff00ff;
 }
 
-.box {
+td.box {
+    width: 400px;
+    padding: 0px;
+    vertical-align: top;
+}
+
+div.box {
     width: 400px;
     border-radius: 15px;
     padding: 0px;
@@ -48,6 +54,10 @@ div.files {
 
 div.inline {
     display: inline;
+}
+
+div.leftPadding {
+    padding-left: 5px;
 }
 
 td.button {
@@ -123,4 +133,10 @@ ol {
     padding-top: 0px;
     padding-bottom: 0px;
     padding-left: 15px;
+}
+
+#redraw {
+    height: 1px;
+    padding: 0px;
+    margin: 0px;
 }

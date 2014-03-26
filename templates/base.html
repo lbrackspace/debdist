@@ -5,6 +5,12 @@
     <link rel="stylesheet" href="/static/style.css"/>
     <script src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
     <script>
+        function forceRedraw() {
+            var redraw = $('#redraw')[0];
+            redraw.style.display = 'none';
+            redraw.offsetHeight;
+            redraw.style.display = 'block';
+        }
         function show(thing) {
             var el = $("#od_" + thing)[0];
             var cb = $("#" + thing)[0];
@@ -30,11 +36,7 @@
                 tdv.style.borderTop = "0px";
                 tdv.style.borderRight = "1px groove";
             }
-
-            var redraw = $('#redraw')[0];
-            redraw.style.display = 'none';
-            redraw.offsetHeight;
-            redraw.style.display = 'block';
+            forceRedraw()
         }
         function showInner(thing) {
             var dots = $("#id_" + thing)[0];
@@ -48,31 +50,56 @@
             } else {
                 dots.style.display = "none";
                 files.style.display = "block";
-
             }
+        }
+        function showRemote(thing) {
+            var dots = $("#id_" + thing)[0];
+            var files = $("#if_" + thing)[0];
+            var td = $("#td_" + thing)[0];
+            var tdv = $("#tdv_" + thing)[0];
+            if (dots.style.display == "none") {
+                dots.style.display = "inline";
+                files.style.display = "none";
+                td.style.borderBottom = "0px";
+                td.style.borderTop = "0px";
+                tdv.style.borderBottom = "0px";
+                tdv.style.borderTop = "0px";
+                tdv.style.borderRight = "1px groove";
+            } else {
+                dots.style.display = "none";
+                files.style.display = "block";
+                td.style.borderBottom = "1px groove";
+                td.style.borderTop = "1px groove";
+                tdv.style.borderBottom = "1px groove";
+                tdv.style.borderTop = "1px groove";
+                tdv.style.borderRight = "0px";
+            }
+            forceRedraw()
         }
     </script>
 </head>
 <body>
-
 {% include "alerts.html" %}
 {% include "results.html" %}
-
+<div id="redraw">&nbsp;</div>
 <form method="POST" action="/">
     <table class="main">
         <tr>
             <td class="box">
-                {% include "localdebs.html" %}
+                <div class="box">
+                    {% include "localdebs.html" %}
+                </div>
             </td>
             <td class="button">
                 {% include "publish.html" %}
             </td>
             <td class="box">
-                {% include "remotedebs.html" %}
+                <div class="box">
+                    {% include "remotedebs.html" %}
+                </div>
             </td>
         </tr>
     </table>
 </form>
-<div id="redraw">&nbsp;</div>
 </body>
 </html>

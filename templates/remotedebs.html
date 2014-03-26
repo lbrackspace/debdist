@@ -1,1 +1,63 @@
 <div class="header">Promoted Packages</div>
+{% if major_remotes %}
+    <table class="filter">
+        <tr class="filter">
+            {% for v in major_remotes|sort %}
+                <td
+                        {% if loop.last %}
+                            class="filterLast"
+                        {% else %}
+                            class="filter"
+                        {% endif %}
+                        >
+                    <a
+                            {% if v == show_remote %}
+                                class="selected"
+                            {% else %}
+                                class="filter"
+                            {% endif %}
+                                href="?r={{ v }}{% if show_version %}&l={{ show_version }}{% endif %}">{{ v }}</a>
+                </td>
+            {% endfor %}
+        </tr>
+    </table>
+
+    <table class="noSpacing files">
+        <tr>
+            <td class="header">
+                Version
+            </td>
+            <td></td>
+        </tr>
+        {% for files in remotes %}
+            {% with version = files.0.version %}
+            {% with vid = version.replace('.','_') %}
+                <tr>
+                    <td class="version" id="tdv_r{{ vid }}">
+                        <div class="leftPadding">{{ version }}</div>
+                    </td>
+                    <td class="files" id="td_r{{ vid }}">
+                        <div class="files inline" id="id_r{{ vid }}">
+                            <a onclick="showRemote('r{{ vid }}')" href="#">
+                                show files...</a>
+                        </div>
+                        <div class="files hidden"
+                             onclick="showRemote('r{{ vid }}')"
+                             id="if_r{{ vid }}">
+                        <ol>
+                            {% for file in files %}
+                             <li>{{ file.file }}</li>
+                            {% endfor %}
+                        </ol>
+                        </div>
+                    </td>
+                </tr>
+            {% endwith %}
+            {% endwith %}
+        {% endfor %}
+        <tr>
+            <td class="version"></td>
+            <td></td>
+        </tr>
+    </table>
+{% endif %}

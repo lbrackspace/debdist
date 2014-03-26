@@ -16,7 +16,7 @@
                             {% else %}
                                 class="filter"
                             {% endif %}
-                                href="?v={{ v }}">{{ v }}</a>
+                                href="?l={{ v }}{% if show_remote %}&r={{ show_remote }}{% endif %}">{{ v }}</a>
                 </td>
             {% endfor %}
         </tr>
