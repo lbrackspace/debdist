@@ -235,8 +235,14 @@ def landing():
             f['file'] = f['file'][f['file'].rfind("/") + 1:]
     client.fill_form(versions)
     tokens = flask.request.values
-    show_local = tokens['l'] if 'l' in tokens else None
-    show_remote = tokens['r'] if 'r' in tokens else None
+    if 'l' in tokens:
+        show_local = tokens['l']
+    else:
+        show_local = sorted(list(major_versions))[-1]
+    if 'r' in tokens:
+        show_remote = tokens['r']
+    else:
+        show_remote = sorted(list(major_remotes))[-1]
     remotes = remote_sort(remotes, show_remote)
     form = DebForm()
     form.init_lists()

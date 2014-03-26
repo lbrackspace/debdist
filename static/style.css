@@ -56,8 +56,9 @@ div.inline {
     display: inline;
 }
 
-div.leftPadding {
+div.version {
     padding-left: 5px;
+    padding-bottom: 1px;
 }
 
 td.button {
