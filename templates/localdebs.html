@@ -4,26 +4,26 @@
         <tr class="filter">
             {% for v in major_versions|sort %}
                 <td
-                {% if loop.last %}
-                    class="filterLast"
+                        {% if loop.last %}
+                            class="filterLast"
                         {% else %}
-                    class="filter"
-                {% endif %}
-                >
-            <a
-                    {% if v == show_version %}
-                        class="selected"
-                    {% else %}
-                        class="filter"
-                    {% endif %}
-                        href="?v={{ v }}">{{ v }}</a>
-            </td>
+                            class="filter"
+                        {% endif %}
+                        >
+                    <a
+                            {% if v == show_version %}
+                                class="selected"
+                            {% else %}
+                                class="filter"
+                            {% endif %}
+                                href="?v={{ v }}">{{ v }}</a>
+                </td>
             {% endfor %}
         </tr>
     </table>
 
     {{ form.hidden_tag() }}
-    <table class="noSpacing">
+    <table class="noSpacing files">
         <tr>
             <td class="header"></td>
             <td class="header">
@@ -33,20 +33,26 @@
         </tr>
         {% for version in form|deb_sort(show_version=show_version) %}
             <tr>
-                <td class="checkbox"
+                <td class="checkbox" id="tdc_{{ version.name }}"
                     onclick="show('{{ version.name }}')">
                     {{ version }}
                 </td>
-                <td class="version">
+                <td class="version" id="tdv_{{ version.name }}">
                     {{ version.label }}
                 </td>
-                <td class="files"
-                    id="td_{{ version.name }}">
-                    <ol>
-                        {% for p in version.list|sort %}
-                            <li>{{ p }}</li>
-                        {% endfor %}
-                    </ol>
+                <td class="files" id="td_{{ version.name }}">
+                <div class="hidden" id="od_{{ version.name }}">
+                    <div class="files inline" id="id_{{ version.name }}">
+                        <a onclick="showInner('{{ version.name }}')" href="#">show files...</a>
+                    </div>
+                    <div class="files hidden" id="if_{{ version.name }}" onclick="showInner('{{ version.name }}')">
+                        <ol>
+                            {% for p in version.list|sort %}
+                                <li>{{ p }}</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                   </div>
                 </td>
             </tr>
         {% endfor %}

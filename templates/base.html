@@ -6,12 +6,49 @@
     <script src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
     <script>
         function show(thing) {
-            var el = $("#td_" + thing)[0];
+            var el = $("#od_" + thing)[0];
             var cb = $("#" + thing)[0];
+            var td = $("#td_" + thing)[0];
+            var tdv = $("#tdv_" + thing)[0];
+            var tdc = $("#tdc_" + thing)[0];
             if (cb.checked) {
-                el.style.display = "inline"
+                el.style.display = "inline";
+                td.style.borderBottom = "1px groove";
+                td.style.borderTop = "1px groove";
+                tdc.style.borderBottom = "1px groove";
+                tdc.style.borderTop = "1px groove";
+                tdv.style.borderBottom = "1px groove";
+                tdv.style.borderTop = "1px groove";
+                tdv.style.borderRight = "0px";
             } else {
-                el.style.display = "none"
+                el.style.display = "none";
+                td.style.borderBottom = "0px";
+                td.style.borderTop = "0px";
+                tdc.style.borderBottom = "0px";
+                tdc.style.borderTop = "0px";
+                tdv.style.borderBottom = "0px";
+                tdv.style.borderTop = "0px";
+                tdv.style.borderRight = "1px groove";
+            }
+
+            var redraw = $('#redraw')[0];
+            redraw.style.display = 'none';
+            redraw.offsetHeight;
+            redraw.style.display = 'block';
+        }
+        function showInner(thing) {
+            var dots = $("#id_" + thing)[0];
+            var files = $("#if_" + thing)[0];
+            var td = $("#td_" + thing)[0];
+            var tdv = $("#tdv_" + thing)[0];
+            var tdc = $("#tdc_" + thing)[0];
+            if (dots.style.display == "none") {
+                dots.style.display = "inline";
+                files.style.display = "none";
+            } else {
+                dots.style.display = "none";
+                files.style.display = "block";
+
             }
         }
     </script>
@@ -36,5 +73,6 @@
         </tr>
     </table>
 </form>
+<div id="redraw">&nbsp;</div>
 </body>
 </html>

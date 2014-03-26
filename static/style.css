@@ -1,5 +1,6 @@
-a.filter {
+a {
     color: #0000FF;
+    text-decoration: none;
 }
 
 a.selected {
@@ -35,6 +36,18 @@ div.header {
     font-size: 2em;
     border-bottom: 1px solid #257cff;
     white-space: nowrap;
+}
+
+div.hidden {
+    display: none;
+}
+
+div.files {
+    padding-left: 10px;
+}
+
+div.inline {
+    display: inline;
 }
 
 td.button {
@@ -73,6 +86,7 @@ td.checkbox {
 td.version {
     vertical-align: top;
     border-right: 1px groove;
+    width: 60px;
 }
 
 td.filter {
@@ -85,10 +99,10 @@ td.filterLast {
 }
 
 td.files {
-    border-style: solid;
-    border-width: 2px;
-    display: none;
     white-space: nowrap;
+    padding: 0px;
+    margin: 0px;
+    width: 100%;
 }
 
 .td {
@@ -97,4 +111,16 @@ td.files {
 
 table.noSpacing {
     border-spacing: 0px;
+}
+
+table.files {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+ol {
+    margin: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 15px;
 }

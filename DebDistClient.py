@@ -167,7 +167,7 @@ def deb_sort(iterable, show_version=None):
                         show_version)]
     else:
         new_list = [x for x in iterable if isinstance(x, DebBoolean)]
-    new_list.sort()
+    new_list.sort(reverse=True)
     return new_list
 
 
