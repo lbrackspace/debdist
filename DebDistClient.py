@@ -87,7 +87,9 @@ class DebDistClient():
             attribute_name = version.replace(".", "_")
             description = ""
             for package in versions[version]:
-                description += package['file'] + ", "
+                filename = package['file']
+                filename = filename[filename.rfind("/")+1:]
+                description += filename + ", "
             description = description[0:-2]
             boolean = DebBoolean(label=version, description=description)
             setattr(DebForm, attribute_name, boolean)
@@ -181,7 +183,7 @@ def landing():
     if form.validate_on_submit():
         selected = [x for x in form if x.data == True]
         status = client.send_debs(selected, versions)
-    return flask.render_template("index.html", major_versions=major_versions,
+    return flask.render_template("base.html", major_versions=major_versions,
                                  form=form, selected=selected, status=status,
                                  show_version=show)
 

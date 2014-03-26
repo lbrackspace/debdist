@@ -1,0 +1,59 @@
+<div class="header">Local Packages</div>
+{% if major_versions %}
+    <table class="filter">
+        <tr class="filter">
+            {% for v in major_versions|sort %}
+                <td
+                {% if loop.last %}
+                    class="filterLast"
+                        {% else %}
+                    class="filter"
+                {% endif %}
+                >
+            <a
+                    {% if v == show_version %}
+                        class="selected"
+                    {% else %}
+                        class="filter"
+                    {% endif %}
+                        href="?v={{ v }}">{{ v }}</a>
+            </td>
+            {% endfor %}
+        </tr>
+    </table>
+
+    {{ form.hidden_tag() }}
+    <table class="noSpacing">
+        <tr>
+            <td class="header"></td>
+            <td class="header">
+                Version
+            </td>
+            <td></td>
+        </tr>
+        {% for version in form|deb_sort(show_version=show_version) %}
+            <tr>
+                <td class="checkbox"
+                    onclick="show('{{ version.name }}')">
+                    {{ version }}
+                </td>
+                <td class="version">
+                    {{ version.label }}
+                </td>
+                <td class="files"
+                    id="td_{{ version.name }}">
+                    <ol>
+                        {% for p in version.list|sort %}
+                            <li>{{ p }}</li>
+                        {% endfor %}
+                    </ol>
+                </td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td></td>
+            <td class="version"></td>
+            <td></td>
+        </tr>
+    </table>
+{% endif %}

@@ -1,0 +1,14 @@
+{% if status == 200 %}
+    {% if selected %}
+        <h3>Selected packages for promotion:</h3>
+        <ul>
+            {% for package in selected %}
+                <li>{{ package.name }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <h3>Did not select any packages for promotion.</h3>
+    {% endif %}
+{% elif status != None %}
+    <h3>Communication with server failed: {{ status }}</h3>
+{% endif %}

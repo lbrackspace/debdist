@@ -28,3 +28,6 @@ On the client (main repository and web-host):
 ```
 python DebDistClient.py
 ```
+
+
+Publish icon source: http://openclipart.org/detail/13847/login-mini-icon-by-artmaster

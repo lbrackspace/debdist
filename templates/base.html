@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Package Promotion</title>
+    <link rel="stylesheet" href="/static/style.css"/>
+    <script src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
+    <script>
+        function show(thing) {
+            var el = $("#td_" + thing)[0];
+            var cb = $("#" + thing)[0];
+            if (cb.checked) {
+                el.style.display = "inline"
+            } else {
+                el.style.display = "none"
+            }
+        }
+    </script>
+</head>
+<body>
+
+{% include "alerts.html" %}
+{% include "results.html" %}
+
+<form method="POST" action="/">
+    <table class="main">
+        <tr>
+            <td class="box">
+                {% include "localdebs.html" %}
+            </td>
+            <td class="button">
+                {% include "publish.html" %}
+            </td>
+            <td class="box">
+                {% include "remotedebs.html" %}
+            </td>
+        </tr>
+    </table>
+</form>
+</body>
+</html>
