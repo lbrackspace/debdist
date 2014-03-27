@@ -116,7 +116,7 @@ class DebDistClient():
                 packages = file(os.path.join(self.deb_path, match)).read()
             lp = self.parse_packages(packages)
         else:
-            raise Exception("No local Packages file found")
+            lp = []
 
         try:
             contents = requests.get(release_remote)
@@ -135,9 +135,9 @@ class DebDistClient():
                         '/'.join((self.remote_deb_base_url, match))).text
                 rp = self.parse_packages(packages)
             else:
-                raise Exception("Failure parsing remote Release file")
+                rp = []
         except:
-            raise Exception("Failure parsing remote Packages file")
+            rp = []
         return lp, rp
 
     def parse_packages(self, contents):
@@ -237,7 +237,7 @@ def landing():
     for r in remotes:
         for f in remotes[r]:
             f['file'] = f['file'][f['file'].rfind("/") + 1:]
-    client.fill_form(versions)
+    app.clientObject.fill_form(versions)
     tokens = flask.request.values
     if 'l' in tokens:
         show_local = tokens['l']
@@ -268,6 +268,7 @@ if __name__ == '__main__':
     options, args = parser.parse_args()
     config = options.config if options.config else "dev.cfg"
     client = DebDistClient(config)
+    app.clientObject = client
     app.run(debug=True, host=client.host, port=client.port,
             ssl_context=client.ssl_context)
     print("Exiting...")
