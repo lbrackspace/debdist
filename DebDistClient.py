@@ -180,11 +180,6 @@ class DebDistClient():
                           data=json.dumps(data), verify=False)
         return r.status_code
 
-    def run(self):
-        app.run(debug=True, host=self.host, port=self.port,
-                ssl_context=self.ssl_context)
-        print("Exiting...")
-
 
 def deb_sort(iterable, show_version=None):
     if iterable is None or isinstance(iterable, jinja2.Undefined):
@@ -273,4 +268,6 @@ if __name__ == '__main__':
     options, args = parser.parse_args()
     config = options.config if options.config else "dev.cfg"
     client = DebDistClient(config)
-    client.run()
+    app.run(debug=True, host=client.host, port=client.port,
+            ssl_context=client.ssl_context)
+    print("Exiting...")
