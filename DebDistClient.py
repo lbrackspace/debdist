@@ -105,7 +105,10 @@ class DebDistClient():
         try:
             contents = file(release_local).read()
         except:
-            contents = gzip.open(release_local).read()
+            try:
+                contents = gzip.open(release_local).read()
+            except:
+                return [], []
 
         match = re.match(".* (.*Packages)\n", contents,
                          flags=re.DOTALL).group(1)
@@ -241,12 +244,16 @@ def landing():
     tokens = flask.request.values
     if 'l' in tokens:
         show_local = tokens['l']
-    else:
+    elif major_versions:
         show_local = sorted(list(major_versions))[-1]
+    else:
+        show_local = None
     if 'r' in tokens:
         show_remote = tokens['r']
-    else:
+    elif major_remotes:
         show_remote = sorted(list(major_remotes))[-1]
+    else:
+        show_remote = None
     remotes = remote_sort(remotes, show_remote)
     form = DebForm()
     form.init_lists()
