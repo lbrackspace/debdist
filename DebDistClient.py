@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with DebDist.  If not, see <http://www.gnu.org/licenses/>.
 
-import collections
 import ConfigParser
 import gzip
 import os
@@ -23,7 +22,6 @@ import StringIO
 
 import flask
 import flask_wtf
-import functools
 import hashlib
 import jinja2
 import json
@@ -43,7 +41,6 @@ class DebForm(flask_wtf.Form):
             b.set_list(versions)
 
 
-@functools.total_ordering
 class DebBoolean(wtforms.BooleanField):
     list = []
 
@@ -76,9 +73,13 @@ class DebDistClient():
         self.remote_deb_base_url = config.get('client', 'remote_deb_base_url')
         self.server_url = config.get('client', 'remote_url')
         self.auth_token = config.get('auth', 'token')
+        self.host = config.get('client', 'host')
+        self.port = config.getint('client', 'port')
+        self.ssl_key = config.get('auth', 'ssl_key')
+        self.ssl_cert = config.get('auth', 'ssl_cert')
         self.ssl_context = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
-        self.ssl_context.use_privatekey_file('server.key')
-        self.ssl_context.use_certificate_file('server.crt')
+        self.ssl_context.use_privatekey_file(self.ssl_key)
+        self.ssl_context.use_certificate_file(self.ssl_cert)
         app.config.from_object('config')
         app.secret_key = self.auth_token
         app.jinja_env.filters['deb_sort'] = deb_sort
@@ -118,16 +119,19 @@ class DebDistClient():
 
         try:
             contents = requests.get(release_remote)
-            match = re.match(".* (.*main/binary-amd64/Packages)\n", contents.text,
-                             flags=re.DOTALL).group(1)
+            match = re.match(".* (.*main/binary-amd64/Packages)\n",
+                             contents.text, flags=re.DOTALL).group(1)
             if match:
                 if match.endswith(".gz"):
-                    response = requests.get(url='/'.join((self.remote_deb_base_url, match)), stream=True)
-                    buffer = StringIO.StringIO( response.raw.read())
+                    response = requests.get(
+                        url='/'.join((self.remote_deb_base_url, match)),
+                        stream=True)
+                    buffer = StringIO.StringIO(response.raw.read())
                     gf = gzip.GzipFile(fileobj=buffer, mode='rb')
                     packages = gf.read()
                 else:
-                    packages = requests.get('/'.join((self.remote_deb_base_url, match))).text
+                    packages = requests.get(
+                        '/'.join((self.remote_deb_base_url, match))).text
                 rp = self.parse_packages(packages)
             else:
                 raise Exception("Failure parsing remote Release file")
@@ -176,7 +180,8 @@ class DebDistClient():
         return r.status_code
 
     def run(self):
-        app.run(debug=True, port=5444, ssl_context=self.ssl_context)
+        app.run(debug=True, host=self.host, port=self.port,
+                ssl_context=self.ssl_context)
         print("Exiting...")
 
 
@@ -193,6 +198,7 @@ def deb_sort(iterable, show_version=None):
     new_list.sort(reverse=True)
     return new_list
 
+
 def remote_sort(remotes, version):
     for r in remotes:
         for f in remotes[r]:
@@ -203,6 +209,7 @@ def remote_sort(remotes, version):
         remotes = [remotes[x] for x in remotes]
     remotes.sort(cmp_deb, reverse=True)
     return remotes
+
 
 def cmp_deb(a, b):
     if "." not in a[0]['version'] or "." not in b[0]['version']:
@@ -224,6 +231,7 @@ def cmp_deb(a, b):
         return 0
     else:
         return -1
+
 
 @app.route('/', methods=('GET', 'POST'))
 def landing():
