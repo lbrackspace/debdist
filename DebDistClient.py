@@ -16,6 +16,7 @@
 
 import ConfigParser
 import gzip
+import optparse
 import os
 import re
 import StringIO
@@ -65,9 +66,9 @@ class DebBoolean(wtforms.BooleanField):
 
 
 class DebDistClient():
-    def __init__(self):
+    def __init__(self, config_file):
         config = ConfigParser.SafeConfigParser()
-        config.read("dev.cfg")
+        config.read(config_file)
         self.deb_path = config.get('client', 'deb_path')
         self.deb_base_url = config.get('client', 'deb_base_url')
         self.remote_deb_base_url = config.get('client', 'remote_deb_base_url')
@@ -266,5 +267,10 @@ def landing():
 
 
 if __name__ == '__main__':
-    client = DebDistClient()
+    parser = optparse.OptionParser()
+    parser.add_option("-c", "--config", dest="config",
+                      help="Path to config file")
+    options, args = parser.parse_args()
+    config = options.config if options.config else "dev.cfg"
+    client = DebDistClient(config)
     client.run()
