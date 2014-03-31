@@ -73,13 +73,13 @@ class DebDistServer():
 
 @app.route('/fetch', methods=['POST'])
 def fetch_debs():
-    if not server.validate_auth(flask.request.headers):
+    if not app.serverObject.validate_auth(flask.request.headers):
         flask.abort(401)
     if not flask.request.json or not 'debs' in flask.request.json:
         flask.abort(400)
     debList = flask.request.json['debs']
     for deb in debList:
-        server.download(deb)
+        app.serverObject.download(deb)
     return flask.make_response("OK", 200)
 
 
