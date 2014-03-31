@@ -234,7 +234,7 @@ def cmp_deb(a, b):
 
 @app.route('/', methods=('GET', 'POST'))
 def landing():
-    versions, remotes = client.parse_releases()
+    versions, remotes = app.clientObject.parse_releases()
     major_versions = set([x[0:4] for x in versions])
     major_remotes = set([x[0:4] for x in remotes])
     for r in remotes:
@@ -260,7 +260,7 @@ def landing():
     selected, status = None, None
     if form.validate_on_submit():
         selected = [x for x in form if x.data == True]
-        status = client.send_debs(selected, versions)
+        status = app.clientObject.send_debs(selected, versions)
     return flask.render_template("base.html", major_versions=major_versions,
                                  form=form, selected=selected, status=status,
                                  show_version=show_local, remotes=remotes,
