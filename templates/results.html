@@ -3,7 +3,7 @@
         <h3>Selected packages for promotion:</h3>
         <ul>
             {% for package in selected %}
-                <li>{{ package.name }}</li>
+                <li>{{ package.label }}</li>
             {% endfor %}
         </ul>
     {% else %}
