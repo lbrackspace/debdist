@@ -81,6 +81,7 @@ class DebDistClient():
         self.ssl_context = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
         self.ssl_context.use_privatekey_file(self.ssl_key)
         self.ssl_context.use_certificate_file(self.ssl_cert)
+        self.debug = config.get('client', 'debug')
         app.config.from_object('config')
         app.secret_key = self.auth_token
         app.jinja_env.filters['deb_sort'] = deb_sort
@@ -276,6 +277,6 @@ if __name__ == '__main__':
     config = options.config if options.config else "dev.cfg"
     client = DebDistClient(config)
     app.clientObject = client
-    app.run(debug=True, host=client.host, port=client.port,
+    app.run(debug=client.debug, host=client.host, port=client.port,
             ssl_context=client.ssl_context)
     print("Exiting...")

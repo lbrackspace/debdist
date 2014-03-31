@@ -16,6 +16,7 @@
 
 import ConfigParser
 import multiprocessing
+import optparse
 
 import flask
 import OpenSSL
@@ -27,15 +28,18 @@ app = flask.Flask(__name__)
 
 
 class DebDistServer():
-    def __init__(self):
+    def __init__(self, config_file):
         config = ConfigParser.SafeConfigParser()
-        config.read("dev.cfg")
+        config.read(config_file)
         self.deb_path = config.get('server', 'deb_path')
         auth_token = config.get('auth', 'token')
         self.accept_tokens = [auth_token]
+        self.host = config.get('server', 'host')
+        self.port = config.getint('server', 'port')
         self.ssl_context = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
         self.ssl_context.use_privatekey_file('server.key')
         self.ssl_context.use_certificate_file('server.crt')
+        self.debug = config.get('server', 'debug')
         self.download_queue = multiprocessing.Queue(100)
         self.run_flag = multiprocessing.Value('b', True)
         downloader = DownloadQueue.DownloadQueue(self.run_flag,
@@ -57,7 +61,8 @@ class DebDistServer():
     def run(self):
         self.downloader_process.start()
         try:
-            app.run(debug=True, port=5443, ssl_context=self.ssl_context)
+            app.run(debug=self.debug, host=self.host, port=self.port,
+                    ssl_context=self.ssl_context)
             self.run_flag.value = False
             self.downloader_process.join()
         except KeyboardInterrupt:
@@ -84,5 +89,11 @@ def fetch_debs():
 
 
 if __name__ == '__main__':
-    server = DebDistServer()
+    parser = optparse.OptionParser()
+    parser.add_option("-c", "--config", dest="config",
+                      help="Path to config file")
+    options, args = parser.parse_args()
+    config = options.config if options.config else "dev.cfg"
+    server = DebDistServer(config)
+    app.serverObject = server
     server.run()
