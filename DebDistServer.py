@@ -32,6 +32,7 @@ class DebDistServer():
         config = ConfigParser.SafeConfigParser()
         config.read(config_file)
         self.deb_path = config.get('server', 'deb_path')
+        self.script_path = config.get('server', 'script_path')
         auth_token = config.get('auth', 'token')
         self.accept_tokens = [auth_token]
         self.host = config.get('server', 'host')
@@ -44,7 +45,8 @@ class DebDistServer():
         self.run_flag = multiprocessing.Value('b', True)
         downloader = DownloadQueue.DownloadQueue(self.run_flag,
                                                  self.download_queue,
-                                                 self.deb_path)
+                                                 self.deb_path,
+                                                 self.script_path)
         self.downloader_process = multiprocessing.Process(target=downloader.run)
         app.config.from_object('config')
         app.secret_key = auth_token

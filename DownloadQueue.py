@@ -16,16 +16,18 @@
 import hashlib
 import os
 import signal
+import subprocess
 import Queue
 
 import requests
 
 
 class DownloadQueue():
-    def __init__(self, run_flag, queue, deb_path):
+    def __init__(self, run_flag, queue, deb_path, script_path):
         self.RUN = run_flag
         self.queue = queue
         self.deb_path = deb_path
+        self.script_path = script_path
         self.process = False
 
     def run(self):
@@ -64,5 +66,6 @@ class DownloadQueue():
         return local_filename
 
     def process_debs(self):
-        print("Run process.sh here.")
+        print("Running script to build repository...")
+        subprocess.call([self.script_path, "prod"])
         self.process = False
